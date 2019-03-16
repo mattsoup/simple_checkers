@@ -8,7 +8,7 @@ death_score = -3
 defense_score = 1
 
 
-board_size = 7
+board_size = 9
 
 board = [["-"] * board_size for x in range(board_size)]
 
@@ -74,12 +74,15 @@ def check_if_opponent(player, my_move, current_position, my_list, opponent_list,
     else:
         return False, None, None
 
-def check_future_death(opponent_piece, my_move, current_position):
+def check_future_death(opponent, opponent_piece, my_move, current_position):
     # print("Potential death!", player, my_move, current_position, my_list, opponent_list, move)
     if abs(opponent_piece[0] - my_move[0]) == 1 and abs(opponent_piece[1] - my_move[1]) == 1:
         direction = (opponent_piece[0] - my_move[0], opponent_piece[1] - my_move[1])
         jump = (my_move[0] - direction[0], my_move[1] - direction[1])
-        print(jump)
+        print("Jump:", jump)
+        print(list(potential_moves([opponent_piece], opponent))[0])
+        if my_move not in list(potential_moves([opponent_piece], opponent))[0]:
+            return False
         # if jump == move:
         #     return True
         if jump == current_position:
@@ -116,6 +119,8 @@ def pick_move(moves, my_list, player, board, opponent_list, skip = False):
     while valid == False:
         for piece in my_list:
             piece_score, piece_move = evaluate_surroundings(player, my_list, piece, opponent_list)
+            if len(piece_move) == 0:
+                    continue
             if piece_score > high_piece_score:
                 chosen_list = [my_list.index(piece)]
                 chosen_move_list = [piece_move]
@@ -124,7 +129,8 @@ def pick_move(moves, my_list, player, board, opponent_list, skip = False):
             elif piece_score == high_piece_score:
                 chosen_list.append(my_list.index(piece))
                 chosen_move_list.append(piece_move)
-        print(chosen_list, chosen_move_list)
+        assert len(chosen_list) > 0, "No valid moves"
+        print("Chosen list:", chosen_list, chosen_move_list)
         # piece = random.randint(0, len(my_list) - 1) # Needs to not be random
         chosen_one = random.randint(0, len(chosen_list) - 1) # Randomly chooses piece from highest scoring pieces
         chosen_one = random.choice(chosen_list)
@@ -186,17 +192,18 @@ def evaluate_surroundings(player, my_list, current_position, opponent_list):
                 score_explanation.append(("Valid jump", jump_score))
             for opponent_piece in opponent_list:
                 print("My_position:", current_position, "My_move:", my_move)
-                future_death = check_future_death(opponent_piece, my_move, current_position)
+                future_death = check_future_death(opponent, opponent_piece, my_move, current_position)
                 print(future_death)
                 if future_death == True: # Valid move that could result in being jumped next opponent move
                     piece_score += death_score
                     current_move_score += death_score
                     score_explanation.append(("Expected death", death_score))
-        if current_move_score > high_move_score:
-            chosen_moves = [move]
-            high_move_score = current_move_score
-        elif current_move_score == high_move_score:
-            chosen_moves.append(move)
+            if current_move_score > high_move_score:
+                chosen_moves = [move]
+                high_move_score = current_move_score
+            elif current_move_score == high_move_score:
+                chosen_moves.append(move)
+
     # Check if teammates directly behind
     # Check how many teammates / opponents there are
     print(score_explanation, piece_score, chosen_moves)

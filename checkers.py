@@ -18,7 +18,7 @@ class PieceAttributes():
         self.color = ""
         self.x = None
         self.y = None
-        self.king = False
+        self.kinged = False
 
 # white_list = [(0,x) for x in range(0, board_size, 2)]
 # white_list = list(chain.from_iterable(((0, x - 1), (1, x), (2, x - 1)) for x in range(-1, board_size, 2)))
@@ -68,14 +68,18 @@ for piece in white_list:
 for piece in black_list:
         board[piece.x][piece.y] = "B"
 
-# for row in board:
-#         print(row)
 
 def print_board():
     for x in range(board_size):
         for y in range(board_size):
             print(board[y][x], end = "\t")
         print("\n")
+
+
+def make_tuples(piece_list):
+    coord_list = [(piece.x, piece.y) for piece in piece_list]
+    return coord_list
+
 
 def update_board(player, current_position, my_move, my_list, opponent_list):
     board[current_position[0]][current_position[1]] = "-"
@@ -86,6 +90,7 @@ def update_board(player, current_position, my_move, my_list, opponent_list):
         opponent_list.remove(((my_move[0] + current_position[0]) / 2, (my_move[1] + current_position[1]) / 2))
         board[int((my_move[0] + current_position[0]) / 2)][int((my_move[1] + current_position[1]) / 2)] = "-"
 
+
 def one_player_check_if_valid_jump(my_move, current_position, my_list, opponent_list):
     if board[my_move[0]][my_move[1]] != "-":
         return False
@@ -93,6 +98,7 @@ def one_player_check_if_valid_jump(my_move, current_position, my_list, opponent_
         return True
     else:
         return False
+
 
 def one_player_check_if_valid_move(player, my_move, current_position, my_list, opponent_list):
     if my_move[0] < 0 or my_move[0] >= board_size or my_move[1] < 0 or my_move[1] >= board_size:
@@ -102,30 +108,31 @@ def one_player_check_if_valid_move(player, my_move, current_position, my_list, o
     else:
         return True
 
+
 def check_if_opponent(player, my_move, current_position, my_list, opponent_list, skip = False):
     # print("Potential jump!", player, my_move, current_position, my_list, opponent_list)
-    direction = (current_position[0] - my_move[0], current_position[1] - my_move[1])
+    direction = (current_position.x - my_move[0], current_position.y - my_move[1])
     jump = (my_move[0] - direction[0], my_move[1] - direction[1])
     # print(jump)
     if jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size and board[jump[0]][jump[1]] == "-":
         if skip == False:
-            # print("Jump!")
             board[my_move[0]][my_move[1]] = "-"
-            opponent_list.remove((my_move[0], my_move[1]))
+            to_remove = make_tuples(opponent_list).index((my_move[0], my_move[1]))
+            del opponent_list[to_remove]
             extra_jump = (jump[0] - direction[0], jump[1] - direction[1])
-            # print(jump)
         return True, jump, True
     else:
         return False, None, None
 
+
 def check_future_death(opponent, opponent_piece, my_move, current_position):
     # print("Potential death!", player, my_move, current_position, my_list, opponent_list, move)
-    if abs(opponent_piece[0] - my_move[0]) == 1 and abs(opponent_piece[1] - my_move[1]) == 1:
-        direction = (opponent_piece[0] - my_move[0], opponent_piece[1] - my_move[1])
+    if abs(opponent_piece.x - my_move[0]) == 1 and abs(opponent_piece.y - my_move[1]) == 1:
+        direction = (opponent_piece.x - my_move[0], opponent_piece.y - my_move[1])
         jump = (my_move[0] - direction[0], my_move[1] - direction[1])
         # print("Jump:", jump)
         # print(list(potential_moves([opponent_piece], opponent))[0])
-        if my_move not in list(potential_moves([opponent_piece], opponent))[0]:
+        if my_move not in list(potential_moves(opponent_piece, opponent_piece.color, opponent_piece.kinged))[0]:
             return False
         # if jump == move:
         #     return True
@@ -136,23 +143,31 @@ def check_future_death(opponent, opponent_piece, my_move, current_position):
     else:
         return False
 
+
 def check_if_valid_move(player, my_move, current_position, my_list, opponent_list, skip = False):
     if my_move[0] < 0 or my_move[0] >= board_size or my_move[1] < 0 or my_move[1] >= board_size:
         return False, None, None
-    elif (my_move[0], my_move[1]) in my_list:
+    elif (my_move[0], my_move[1]) in make_tuples(my_list):
         return False, None, None
-    elif (my_move[0], my_move[1]) in opponent_list:
+    elif (my_move[0], my_move[1]) in make_tuples(opponent_list):
         return check_if_opponent(player, my_move, current_position, my_list, opponent_list, skip)
     else:
         return True, my_move, None
 
-def potential_moves(positions, player):
-    if player == "W":
-        for (x, y) in positions:
-            yield [(x + 1, y - 1), (x + 1, y + 1)]
+
+def potential_moves(positions, player, kinged = False):
+    if kinged == True:
+        # for piece in positions:
+        #     yield [(piece.x + 1, piece.y + 1), (piece.x + 1, piece.y - 1), (piece.x - 1, piece.y + 1), (piece.x - 1, piece.y - 1)]
+        yield [(positions.x + 1, positions.y + 1), (positions.x + 1, positions.y - 1), (positions.x - 1, positions.y + 1), (positions.x - 1, positions.y - 1)]
+    elif player == "W":
+        # for piece in positions:
+        #     yield [(piece.x + 1, piece.y - 1), (piece.x + 1, piece.y + 1)]
+        yield [(positions.x + 1, positions.y - 1), (positions.x + 1, positions.y + 1)]
     else:
-        for (x, y) in positions:
-            yield [(x - 1, y - 1),(x - 1, y + 1)]
+        # for piece in positions:
+        #     yield [(piece.x - 1, piece.y - 1),(piece.x - 1, piece.y + 1)]
+        yield [(positions.x - 1, positions.y - 1), (positions.x - 1, positions.y + 1)]
 
 def pick_move(moves, my_list, player, board, opponent_list, skip = False):
     valid = False
@@ -162,7 +177,7 @@ def pick_move(moves, my_list, player, board, opponent_list, skip = False):
     chosen_move_list = []
     while valid == False:
         for piece in my_list:
-            piece_score, piece_move = evaluate_surroundings(player, my_list, piece, opponent_list)
+            piece_score, piece_move = evaluate_surroundings(player, piece, my_list, piece, opponent_list)
             if len(piece_move) == 0:
                     continue
             if piece_score > high_piece_score:
@@ -197,25 +212,30 @@ def pick_move(moves, my_list, player, board, opponent_list, skip = False):
     #     _valid, my_move, extra_jump = check_if_valid_move(player, my_move, current_position, my_list, opponent_list)
 
     else:
-        x = my_list[chosen_one][0]
-        y = my_list[chosen_one][1]
+        x = my_list[chosen_one].x
+        y = my_list[chosen_one].y
         board[x][y] = "-"
         x = my_move[0]
         y = my_move[1]
         board[x][y] = player
-        my_list[chosen_one] = my_move
+        my_list[chosen_one].x = my_move[0]
+        my_list[chosen_one].y = my_move[1]
+        if my_list[chosen_one].color == "W" and my_list[chosen_one].x == board_size - 1:
+            my_list[chosen_one].kinged = True
+        elif my_list[chosen_one].color == "B" and my_list[chosen_one].x == 0:
+            my_list[chosen_one].kinged = True
         # for row in board:
         #         print(row)
         print_board()
 
-def evaluate_surroundings(player, my_list, current_position, opponent_list):
+def evaluate_surroundings(player, piece, my_list, current_position, opponent_list):
     print("Evaluating surroundings")
     # print(player, current_position, opponent_list)
     if player == "W":
         opponent = "B"
     else:
         opponent = "W"
-    my_potential_moves = list(potential_moves([current_position], player))
+    my_potential_moves = list(potential_moves(piece, piece.color, piece.kinged))
     # print(my_potential_moves)
 
     high_move_score = -10000 # Arbitrarily small score
@@ -250,6 +270,8 @@ def evaluate_surroundings(player, my_list, current_position, opponent_list):
 
     # Check if teammates directly behind
     # Check how many teammates / opponents there are
+    # Check if currently in danger of being jumped
+
     print(score_explanation, piece_score, chosen_moves)
     return piece_score, chosen_moves
 
@@ -300,16 +322,19 @@ def one_player():
 #one_player()
 print_board()
 
-for x in range(0, 100):
+for x in range(0, 500):
     print("Move {}".format(x))
     if len(white_list) == 0 or len(black_list) == 0:
         print("Game over!")
         break
     if x % 2 == 0:
         print("W's move")
-        moves = list(potential_moves(white_list, "W"))
+        moves = [list(potential_moves(piece, "W", piece.kinged)) for piece in white_list]
+        print("Moves:", moves)
+        # moves = list(potential_moves(white_list, "W"))
         pick_move(moves, white_list, "W", board, black_list)
     else:
         print("B's move")
-        moves = list(potential_moves(black_list, "B"))
+        moves = [list(potential_moves(piece, "B", piece.kinged)) for piece in black_list]
+        # moves = list(potential_moves(black_list, "B"))
         pick_move(moves, black_list, "B", board, white_list)

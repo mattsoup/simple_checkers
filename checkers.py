@@ -133,13 +133,21 @@ def check_future_death(opponent, opponent_piece, my_move, current_position):
         jump = (my_move[0] - direction[0], my_move[1] - direction[1])
         # print("Jump:", jump)
         # print(list(potential_moves([opponent_piece], opponent))[0])
+        # print("My move", my_move, list(potential_moves(opponent_piece)))
         if my_move not in list(potential_moves(opponent_piece))[0]:
+            # print("Not in danger!")
+            return False
+        elif my_move[0] == 0 or my_move[0] == board_size - 1 or my_move[1] == 0 or my_move[1] == board_size - 1:
+            # print("Moving to the edge of the board!")
             return False
         # if jump == move:
         #     return True
-        if jump == current_position:
+        # if jump == (current_position.x, current_position.y):
+        if jump == (current_position.x, current_position.y):
+            print("Would jump me :(")
             return True
-        elif jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size and board[jump[0]][jump[1]] == "-":
+        elif jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size and (board[jump[0]][jump[1]] == "-" or board[jump[0]][jump[1]] == opponent_piece.color):
+            print("Would return my jump")
             return True
     else:
         return False
@@ -342,7 +350,6 @@ for x in range(0, 500):
     if x % 2 == 0:
         print("W's move")
         moves = [list(potential_moves(piece)) for piece in white_list]
-        print("Moves:", moves)
         # moves = list(potential_moves(white_list, "W"))
         pick_move(moves, white_list, "W", board, black_list)
     else:

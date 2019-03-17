@@ -7,6 +7,7 @@ jump_score = 5
 move_score = 1
 death_score = -3
 defense_score = 1
+avoid_death_score = 2
 
 
 board_size = 8
@@ -132,7 +133,7 @@ def check_future_death(opponent, opponent_piece, my_move, current_position):
         jump = (my_move[0] - direction[0], my_move[1] - direction[1])
         # print("Jump:", jump)
         # print(list(potential_moves([opponent_piece], opponent))[0])
-        if my_move not in list(potential_moves(opponent_piece, opponent_piece.color, opponent_piece.kinged))[0]:
+        if my_move not in list(potential_moves(opponent_piece))[0]:
             return False
         # if jump == move:
         #     return True
@@ -155,12 +156,12 @@ def check_if_valid_move(player, my_move, current_position, my_list, opponent_lis
         return True, my_move, None
 
 
-def potential_moves(positions, player, kinged = False):
-    if kinged == True:
+def potential_moves(positions):
+    if positions.kinged == True:
         # for piece in positions:
         #     yield [(piece.x + 1, piece.y + 1), (piece.x + 1, piece.y - 1), (piece.x - 1, piece.y + 1), (piece.x - 1, piece.y - 1)]
         yield [(positions.x + 1, positions.y + 1), (positions.x + 1, positions.y - 1), (positions.x - 1, positions.y + 1), (positions.x - 1, positions.y - 1)]
-    elif player == "W":
+    elif positions.color == "W":
         # for piece in positions:
         #     yield [(piece.x + 1, piece.y - 1), (piece.x + 1, piece.y + 1)]
         yield [(positions.x + 1, positions.y - 1), (positions.x + 1, positions.y + 1)]
@@ -235,14 +236,14 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
         opponent = "B"
     else:
         opponent = "W"
-    my_potential_moves = list(potential_moves(piece, piece.color, piece.kinged))
+    my_potential_moves = list(potential_moves(piece))
     # print(my_potential_moves)
 
     high_move_score = -10000 # Arbitrarily small score
     piece_score = 0
     score_explanation = []
     chosen_moves = []
-    for move in my_potential_moves[0]:
+    for move in my_potential_moves[0]: # Gonna check if I have any valid moves
         # print("Move:", move)
         current_move_score = 0
         valid, my_move, _extra_jump = check_if_valid_move(player, move, current_position, my_list, opponent_list, True)
@@ -262,6 +263,7 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
                     piece_score += death_score
                     current_move_score += death_score
                     score_explanation.append(("Expected death", death_score))
+
             if current_move_score > high_move_score:
                 chosen_moves = [move]
                 high_move_score = current_move_score
@@ -272,6 +274,10 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
     # Check how many teammates / opponents there are
     # Check if currently in danger of being jumped
 
+    score_explanation = list(set(score_explanation))
+    piece_score = 0
+    for (explanation, score) in score_explanation:
+        piece_score += score
     print(score_explanation, piece_score, chosen_moves)
     return piece_score, chosen_moves
 
@@ -329,12 +335,12 @@ for x in range(0, 500):
         break
     if x % 2 == 0:
         print("W's move")
-        moves = [list(potential_moves(piece, "W", piece.kinged)) for piece in white_list]
+        moves = [list(potential_moves(piece)) for piece in white_list]
         print("Moves:", moves)
         # moves = list(potential_moves(white_list, "W"))
         pick_move(moves, white_list, "W", board, black_list)
     else:
         print("B's move")
-        moves = [list(potential_moves(piece, "B", piece.kinged)) for piece in black_list]
+        moves = [list(potential_moves(piece)) for piece in black_list]
         # moves = list(potential_moves(black_list, "B"))
         pick_move(moves, black_list, "B", board, white_list)

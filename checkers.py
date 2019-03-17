@@ -11,28 +11,62 @@ defense_score = 1
 
 board_size = 8
 
-board = [["-"] * board_size for x in range(board_size)]
+board = [["-"] * board_size for x in range(board_size + 1)]
 
-white_list = [(0,x) for x in range(0, board_size, 2)]
-white_list = list(chain.from_iterable(((0, x - 1), (1, x), (2, x - 1)) for x in range(-1, board_size, 2)))
-for (x, y) in white_list:
-    if  y < 0 or y > board_size:
-        white_list.remove((x, y))
+class PieceAttributes():
+    def __init__(self):
+        self.color = ""
+        self.x = None
+        self.y = None
+        self.king = False
 
-black_list = [(board_size - 1, x) for x in range(0, board_size, 2)]
-black_list = list(chain.from_iterable(((board_size - 1, x + 1), (board_size - 2, x), (board_size - 3, x + 1)) for x in range(0, board_size, 2)))
-for (x, y) in black_list:
-    if  y < 0 or y > board_size:
-        black_list.remove((x, y))
+# white_list = [(0,x) for x in range(0, board_size, 2)]
+# white_list = list(chain.from_iterable(((0, x - 1), (1, x), (2, x - 1)) for x in range(-1, board_size, 2)))
+white_list = []
+for y in range(-1, board_size, 2):
+    for x in range(0, 3):
+        my_piece = PieceAttributes()
+        my_piece.color = "W"
+        my_piece.x = x
+        if x == 1:
+            my_piece.y = y
+        else:
+            my_piece.y = y - 1
+        white_list.append(my_piece)
+
+for piece in white_list[:]: # Slice cuz ya can't iterate over a list and change it too!
+    if piece.y < 0 or piece.y > board_size:
+        white_list.remove(piece)
+
+# black_list = [(board_size - 1, x) for x in range(0, board_size, 2)]
+# black_list = list(chain.from_iterable(((board_size - 1, x + 1), (board_size - 2, x), (board_size - 3, x + 1)) for x in range(0, board_size, 2)))
+black_list = []
+for y in range(0, board_size, 2):
+    for x in range(1, 4):
+        my_piece = PieceAttributes()
+        my_piece.color = "B"
+        my_piece.x = board_size - x
+        if x == 2:
+            my_piece.y = y
+        else:
+            my_piece.y = y + 1
+        black_list.append(my_piece)
+for piece in black_list[:]:
+    if  piece.y < 0 or piece.y > board_size:
+        black_list.remove(piece)
 
 # white_list = [(0,0)]
 # black_list = [(1,1), (3,3), (5,5)]
-print(white_list, black_list)
+for piece in white_list:
+    print((piece.x, piece.y), end = " ")
+for piece in black_list:
+    print((piece.x, piece.y), end = " ")
+print("\n")
 
-for (x,y) in white_list:
-        board[x][y] = "W"
-for (x,y) in black_list:
-        board[x][y] = "B"
+for piece in white_list:
+        board[piece.x][piece.y] = "W"
+for piece in black_list:
+        board[piece.x][piece.y] = "B"
 
 # for row in board:
 #         print(row)
@@ -203,7 +237,7 @@ def evaluate_surroundings(player, my_list, current_position, opponent_list):
             for opponent_piece in opponent_list:
                 # print("My_position:", current_position, "My_move:", my_move)
                 future_death = check_future_death(opponent, opponent_piece, my_move, current_position)
-                print(future_death)
+                # print(future_death)
                 if future_death == True: # Valid move that could result in being jumped next opponent move
                     piece_score += death_score
                     current_move_score += death_score

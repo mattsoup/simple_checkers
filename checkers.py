@@ -263,6 +263,12 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
                     piece_score += death_score
                     current_move_score += death_score
                     score_explanation.append(("Expected death", death_score))
+                future_death = check_future_death(opponent, opponent_piece, (current_position.x, current_position.y), current_position)
+                if future_death == True: # Valid move and if I don't move I could get jumped next opponent move
+                    piece_score += death_score
+                    current_move_score += avoid_death_score
+                    score_explanation.append(("Avoiding death", avoid_death_score))
+
 
             if current_move_score > high_move_score:
                 chosen_moves = [move]

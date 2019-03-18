@@ -6,8 +6,8 @@ from itertools import chain
 jump_score = 5
 move_score = 1
 death_score = -3
-defense_score = 1
 avoid_death_score = 2
+provide_defense_score = 2
 
 
 board_size = 8
@@ -240,7 +240,7 @@ def pick_move(moves, my_list, player, board, opponent_list, skip = False):
 def evaluate_surroundings(player, piece, my_list, current_position, opponent_list):
     print("Evaluating surroundings")
     # print(player, current_position, opponent_list)
-    if player == "W":
+    if piece.color == "W":
         opponent = "B"
     else:
         opponent = "W"
@@ -276,7 +276,16 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
                     piece_score += death_score
                     current_move_score += avoid_death_score
                     score_explanation.append(("Avoiding death", avoid_death_score))
-
+            for teammate in my_list:
+                if teammate != piece:
+                    _tmp = PieceAttributes()
+                    _tmp.color = piece.color
+                    _tmp.x = my_move[0]
+                    _tmp.y = my_move[1]
+                    if (teammate.x, teammate.y) in list(potential_moves(_tmp))[0] and teammate.x != 0 and teammate.x != board_size - 1 and teammate.y != 0 and teammate.y != board_size - 1:
+                        piece_score += provide_defense_score
+                        current_move_score += provide_defense_score
+                        score_explanation.append(("Potentially providing defense", provide_defense_score))
 
             if current_move_score > high_move_score:
                 chosen_moves = [move]
@@ -284,9 +293,7 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
             elif current_move_score == high_move_score:
                 chosen_moves.append(move)
 
-    # Check if teammates directly behind
     # Check how many teammates / opponents there are
-    # Check if currently in danger of being jumped
 
     score_explanation = list(set(score_explanation))
     piece_score = 0

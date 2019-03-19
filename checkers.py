@@ -10,8 +10,8 @@ avoid_death_score = 2
 provide_defense_score = 2
 distance_to_king_score = 1
 distance_to_king_factor = 0.5
-aggression_factor = 0.5
-coward_factor = 0.5
+aggression_factor = 1.0
+coward_factor = 1.0
 
 
 board_size = 8
@@ -31,7 +31,7 @@ white_list = []
 for y in range(-1, board_size, 2):
     for x in range(0, 3):
         my_piece = PieceAttributes()
-        my_piece.color = "W"
+        my_piece.color = "w"
         my_piece.x = x
         if x == 1:
             my_piece.y = y
@@ -49,7 +49,7 @@ black_list = []
 for y in range(0, board_size, 2):
     for x in range(1, 4):
         my_piece = PieceAttributes()
-        my_piece.color = "B"
+        my_piece.color = "b"
         my_piece.x = board_size - x
         if x == 2:
             my_piece.y = y
@@ -69,9 +69,9 @@ for piece in black_list:
 print("\n")
 
 for piece in white_list:
-        board[piece.x][piece.y] = "W"
+        board[piece.x][piece.y] = "w"
 for piece in black_list:
-        board[piece.x][piece.y] = "B"
+        board[piece.x][piece.y] = "b"
 
 
 def print_board():
@@ -157,7 +157,7 @@ def check_future_death(opponent, opponent_piece, my_move, current_position):
         if jump == (current_position.x, current_position.y):
             print("Would jump me :(")
             return True
-        elif jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size and (board[jump[0]][jump[1]] == "-" or board[jump[0]][jump[1]] == opponent_piece.color):
+        elif jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size and (board[jump[0]][jump[1]] == "-" or board[jump[0]][jump[1]].upper() == opponent_piece.color.upper()):
             print("Would return my jump")
             return True
     else:
@@ -180,7 +180,7 @@ def potential_moves(positions):
         # for piece in positions:
         #     yield [(piece.x + 1, piece.y + 1), (piece.x + 1, piece.y - 1), (piece.x - 1, piece.y + 1), (piece.x - 1, piece.y - 1)]
         yield [(positions.x + 1, positions.y + 1), (positions.x + 1, positions.y - 1), (positions.x - 1, positions.y + 1), (positions.x - 1, positions.y - 1)]
-    elif positions.color == "W":
+    elif positions.color.upper() == "W":
         # for piece in positions:
         #     yield [(piece.x + 1, piece.y - 1), (piece.x + 1, piece.y + 1)]
         yield [(positions.x + 1, positions.y - 1), (positions.x + 1, positions.y + 1)]
@@ -190,7 +190,7 @@ def potential_moves(positions):
         yield [(positions.x - 1, positions.y - 1), (positions.x - 1, positions.y + 1)]
 
 def distance_to_king(piece):
-    if piece.color == "W":
+    if piece.color.upper() == "W":
         distance = board_size - 1 - piece.x
     else:
         distance = piece.x
@@ -252,10 +252,12 @@ def pick_move(moves, my_list, player, board, opponent_list, skip = False):
         board[x][y] = player
         my_list[chosen_one].x = my_move[0]
         my_list[chosen_one].y = my_move[1]
-        if my_list[chosen_one].color == "W" and my_list[chosen_one].x == board_size - 1:
+        if my_list[chosen_one].color.upper() == "W" and my_list[chosen_one].x == board_size - 1:
             my_list[chosen_one].kinged = True
-        elif my_list[chosen_one].color == "B" and my_list[chosen_one].x == 0:
+            my_list[chosen_one].color = "W"
+        elif my_list[chosen_one].color.upper() == "B" and my_list[chosen_one].x == 0:
             my_list[chosen_one].kinged = True
+            my_list[chosen_one].color = "B"
         # for row in board:
         #         print(row)
         print_board()
@@ -263,10 +265,10 @@ def pick_move(moves, my_list, player, board, opponent_list, skip = False):
 def evaluate_surroundings(player, piece, my_list, current_position, opponent_list):
     print("Evaluating surroundings")
     # print(player, current_position, opponent_list)
-    if piece.color == "W":
-        opponent = "B"
+    if piece.color.upper() == "W":
+        opponent = "b"
     else:
-        opponent = "W"
+        opponent = "b"
     my_potential_moves = list(potential_moves(piece))
     # print(my_potential_moves)
 

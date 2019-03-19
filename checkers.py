@@ -8,6 +8,10 @@ move_score = 1
 death_score = -3
 avoid_death_score = 2
 provide_defense_score = 2
+distance_to_king_score = 1
+distance_to_king_factor = 0.5
+aggression_factor = 0.5
+coward_factor = 0.5
 
 
 board_size = 8
@@ -76,6 +80,13 @@ def print_board():
             print(board[y][x], end = "\t")
         print("\n")
 
+
+def make_piece(x, y, color):
+    piece = PieceAttributes()
+    piece.x = x
+    piece.y = y
+    piece.color = color
+    return piece
 
 def make_tuples(piece_list):
     coord_list = [(piece.x, piece.y) for piece in piece_list]
@@ -178,6 +189,18 @@ def potential_moves(positions):
         #     yield [(piece.x - 1, piece.y - 1),(piece.x - 1, piece.y + 1)]
         yield [(positions.x - 1, positions.y - 1), (positions.x - 1, positions.y + 1)]
 
+def distance_to_king(piece):
+    if piece.color == "W":
+        distance = board_size - 1 - piece.x
+    else:
+        distance = piece.x
+    return distance
+
+def distance_to_opponent(piece, opponent):
+    # distance = abs(piece.x - opponent.x) + abs(piece.y - opponent.y) # Pretty sure Manhattan distance won't work for this
+    distance = max([abs(piece.x - opponent.x), abs(piece.y - opponent.y)]) # Chessboard distance
+    return distance
+
 def pick_move(moves, my_list, player, board, opponent_list, skip = False):
     valid = False
     attempt = 0
@@ -256,6 +279,7 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
         current_move_score = 0
         valid, my_move, _extra_jump = check_if_valid_move(player, move, current_position, my_list, opponent_list, True)
         if valid == True: # Valid move
+            potential_piece = make_piece(my_move[0], my_move[1], piece.color)
             piece_score += move_score
             current_move_score += move_score
             score_explanation.append(("Valid move", move_score))
@@ -263,29 +287,60 @@ def evaluate_surroundings(player, piece, my_list, current_position, opponent_lis
                 piece_score += jump_score # Valid move that is a jump
                 current_move_score += jump_score
                 score_explanation.append(("Valid jump", jump_score))
+
+            nearest_opponent_distance = 10000 # Arbitrarily large
+            nearest_opponent = None
             for opponent_piece in opponent_list:
-                # print("My_position:", current_position, "My_move:", my_move)
+                if distance_to_opponent(piece, opponent_piece) < nearest_opponent_distance:
+                    nearest_opponent = opponent_piece
+                    nearest_opponent_distance = distance_to_opponent(piece, opponent_piece)
+
                 future_death = check_future_death(opponent, opponent_piece, my_move, current_position)
-                # print(future_death)
                 if future_death == True: # Valid move that could result in being jumped next opponent move
                     piece_score += death_score
                     current_move_score += death_score
                     score_explanation.append(("Expected death", death_score))
+
                 future_death = check_future_death(opponent, opponent_piece, (current_position.x, current_position.y), current_position)
                 if future_death == True: # Valid move and if I don't move I could get jumped next opponent move
                     piece_score += death_score
                     current_move_score += avoid_death_score
                     score_explanation.append(("Avoiding death", avoid_death_score))
+
+            best_distance_score = ("None", 0)
+            distance_change = distance_to_opponent(piece, nearest_opponent) - distance_to_opponent(potential_piece, nearest_opponent)
+            print("Distance change:", distance_change)
+            if len(my_list) / len(opponent_list) >= 1:
+                total_distance_score = (distance_change * aggression_factor) * (len(my_list) / len(opponent_list))
+                if total_distance_score > best_distance_score[1]:
+                    best_distance_score = ("Advancing towards the enemy", total_distance_score)
+                # piece_score += distance_change * aggression_factor
+                # current_move_score += distance_change * aggression_factor
+                # score_explanation.append(("Advancing towards the enemy", (distance_change * aggression_factor)))
+            else:
+                total_distance_score = ((-distance_change) * aggression_factor) * (1 / (len(my_list) / len(opponent_list)))
+                if total_distance_score > best_distance_score[1]:
+                    best_distance_score = ("Running away!", total_distance_score)
+                # piece_score += (-distance_change) * coward_factor
+                # current_move_score += (-distance_change) * coward_factor
+                # score_explanation.append(("Running away!", ((-distance_change) * coward_factor)))
+            piece_score += best_distance_score[1]
+            current_move_score += best_distance_score[1]
+            if best_distance_score != ("None", 0):
+                score_explanation.append(best_distance_score)
+
             for teammate in my_list:
                 if teammate != piece:
-                    _tmp = PieceAttributes()
-                    _tmp.color = piece.color
-                    _tmp.x = my_move[0]
-                    _tmp.y = my_move[1]
-                    if (teammate.x, teammate.y) in list(potential_moves(_tmp))[0] and teammate.x != 0 and teammate.x != board_size - 1 and teammate.y != 0 and teammate.y != board_size - 1:
+                    if (teammate.x, teammate.y) in list(potential_moves(potential_piece))[0] and teammate.x != 0 and teammate.x != board_size - 1 and teammate.y != 0 and teammate.y != board_size - 1:
                         piece_score += provide_defense_score
                         current_move_score += provide_defense_score
                         score_explanation.append(("Potentially providing defense", provide_defense_score))
+
+            if piece.kinged == False:
+                distance = 1 - (distance_to_king(potential_piece) / board_size)
+                piece_score += distance_to_king_factor * (distance * distance_to_king_score)
+                current_move_score += distance_to_king_factor * (distance * distance_to_king_score)
+                score_explanation.append(("Moving closer to being kinged", distance_to_king_factor * (distance * distance_to_king_score)))
 
             if current_move_score > high_move_score:
                 chosen_moves = [move]

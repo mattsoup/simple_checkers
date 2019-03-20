@@ -268,7 +268,6 @@ def pick_move(my_list, opponent_list, board):
     board[x][y] = "-"
     x = my_move[0]
     y = my_move[1]
-    board[x][y] = chosen_one.color
     chosen_one.x = my_move[0]
     chosen_one.y = my_move[1]
     if chosen_one.color.upper() == "W" and chosen_one.x == board_size - 1:
@@ -279,6 +278,7 @@ def pick_move(my_list, opponent_list, board):
         chosen_one.color = "B"
     # for row in board:
     #         print(row)
+    board[x][y] = chosen_one.color
     print_board()
 
 def evaluate_surroundings(piece, my_list, opponent_list):
@@ -359,8 +359,15 @@ def evaluate_surroundings(piece, my_list, opponent_list):
                 if teammate != piece:
                     if (teammate.x, teammate.y) in potential_piece.potential_moves() and teammate.x != 0 and teammate.x != board_size - 1 and teammate.y != 0 and teammate.y != board_size - 1:
                         # piece_score += provide_defense_score
-                        current_move_score += provide_defense_score
-                        score_explanation.append(("Potentially providing defense", provide_defense_score))
+                        for opponent_piece in opponent_list:
+                            future_death = check_future_death(opponent_piece, (teammate.x, teammate.y), (teammate.x, teammate.y))
+                            if future_death == True: # Valid move and if I don't move I could get jumped next opponent move
+                                # piece_score += death_score
+                                current_move_score += avoid_death_score
+                                score_explanation.append(("Providing defense", provide_defense_score))
+
+                        # current_move_score += provide_defense_score
+                        # score_explanation.append(("Potentially providing defense", provide_defense_score))
 
             if piece.kinged == False:
                 distance = 1 - (distance_to_king(potential_piece) / board_size)
@@ -437,7 +444,7 @@ def one_player():
 print_board()
 
 for x in range(0, 500):
-    print("Move {}".format(x))
+    print("Move {}".format(x + 1))
     if len(white_list) == 0 or len(black_list) == 0:
         print("Game over!")
         break

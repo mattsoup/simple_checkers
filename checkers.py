@@ -11,8 +11,8 @@ provide_defense_score = 2
 distance_to_king_score = 1
 distance_to_king_factor = 0.5
 aggression_threshhold = 1.0
-aggression_factor = 0.5
-coward_factor = 1.0
+aggression_factor = 0.8
+coward_factor = 0.5
 
 
 board_size = 8
@@ -147,32 +147,31 @@ def check_if_opponent(my_move, current_position, my_list, opponent_list, skip = 
         return False, None, None
 
 
-def check_future_death(opponent_piece, my_move, current_position):
+def check_future_death(opponent_piece, my_move, current_position, potential_jump = False):
     # print("Potential death!", player, my_move, current_position, my_list, opponent_list, move)
-    if abs(opponent_piece.x - my_move[0]) == 1 and abs(opponent_piece.y - my_move[1]) == 1:
-        direction = (opponent_piece.x - my_move[0], opponent_piece.y - my_move[1])
-        jump = (my_move[0] - direction[0], my_move[1] - direction[1])
-        # print("Jump:", jump)
-        # print(list(potential_moves([opponent_piece], opponent))[0])
-        # print("My move", my_move, list(potential_moves(opponent_piece)))
-        if my_move not in opponent_piece.potential_moves():
-            # print("Not in danger!")
-            return False
-        elif my_move[0] == 0 or my_move[0] == board_size - 1 or my_move[1] == 0 or my_move[1] == board_size - 1:
-            # print("Moving to the edge of the board!")
-            return False
-        # if jump == move:
-        #     return True
-        # if jump == (current_position.x, current_position.y):
-        if jump == current_position:
-            print("Would jump me :(")
-            return True
-        elif jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size and (board[jump[0]][jump[1]] == "-" or board[jump[0]][jump[1]].upper() == opponent_piece.color.upper()):
-            print("Would return my jump")
-            return True
-    else:
+    direction = (opponent_piece.x - my_move[0], opponent_piece.y - my_move[1])
+    jump = (my_move[0] - direction[0], my_move[1] - direction[1])
+    print(current_position, my_move, (opponent_piece.x, opponent_piece.y), direction, jump)
+    # print("Jump:", jump)
+    # print(list(potential_moves([opponent_piece], opponent))[0])
+    # print("My move", my_move, list(potential_moves(opponent_piece)))
+    if my_move[0] == 0 or my_move[0] == board_size - 1 or my_move[1] == 0 or my_move[1] == board_size - 1:
+        print("Moving to the edge of the board!")
         return False
-
+    # if jump == move:
+    #     return True
+    # if jump == (current_position.x, current_position.y):
+    if jump == current_position:
+        print("Would jump me straight")
+        return True
+    if jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size:
+        if board[jump[0]][jump[1]] == "-":
+            print("Would jump me sideways")
+            return True
+        elif potential_jump == True and board[jump[0]][jump[1]].upper() == opponent_piece.color.upper():
+            print("Would return my jump straight")
+            return True
+    return False
 
 def check_if_valid_move(my_move, current_position, my_list, opponent_list, skip = False):
     if my_move[0] < 0 or my_move[0] >= board_size or my_move[1] < 0 or my_move[1] >= board_size:
@@ -293,17 +292,19 @@ def evaluate_surroundings(piece, my_list, opponent_list):
     best_explanation = []
     current_position = (piece.x, piece.y)
     for move in my_potential_moves: # Gonna check if I have any valid moves
+        potential_jump = False
         # print("Move:", move)
         current_move_score = 0
         score_explanation = []
         valid, my_move, _extra_jump = check_if_valid_move(move, current_position, my_list, opponent_list, True)
         if valid == True: # Valid move
+            print(my_move)
             potential_piece = make_piece(my_move[0], my_move[1], piece.color)
             # piece_score += move_score
             current_move_score += move_score
             score_explanation.append(("Valid move", move_score))
             if my_move != move:
-                # piece_score += jump_score # Valid move that is a jump
+                potential_jump = True
                 current_move_score += jump_score
                 score_explanation.append(("Valid jump", jump_score))
 
@@ -317,17 +318,19 @@ def evaluate_surroundings(piece, my_list, opponent_list):
                 elif distance_to_opponent(piece, opponent_piece) == nearest_opponent_distance:
                     nearest_opponents.append(opponent_piece)
 
-                future_death = check_future_death(opponent_piece, my_move, current_position)
-                if future_death == True: # Valid move that could result in being jumped next opponent move
-                    # piece_score += death_score
-                    current_move_score += death_score
-                    score_explanation.append(("Expected death", death_score))
+                if distance_to_opponent(potential_piece, opponent_piece) == 1 and my_move in opponent_piece.potential_moves():
+                    future_death = check_future_death(opponent_piece, (potential_piece.x, potential_piece.y), current_position, potential_jump)
+                    if future_death == True: # Valid move that could result in being jumped next opponent move
+                        # piece_score += death_score
+                        current_move_score += death_score
+                        score_explanation.append(("Expected death", death_score))
 
-                future_death = check_future_death(opponent_piece, current_position, current_position)
-                if future_death == True: # Valid move and if I don't move I could get jumped next opponent move
-                    # piece_score += death_score
-                    current_move_score += avoid_death_score
-                    score_explanation.append(("Avoiding death", avoid_death_score))
+                if distance_to_opponent(piece, opponent_piece) == 1 and current_position in opponent_piece.potential_moves():
+                    future_death = check_future_death(opponent_piece, current_position, current_position)
+                    if future_death == True: # Valid move and if I don't move I could get jumped next opponent move
+                        # piece_score += death_score
+                        current_move_score += avoid_death_score
+                        score_explanation.append(("Avoiding death", avoid_death_score))
 
             best_distance_score = ("None", 0)
             # print("Move:", (potential_piece.x, potential_piece.y))
@@ -343,6 +346,9 @@ def evaluate_surroundings(piece, my_list, opponent_list):
                     # piece_score += distance_change * aggression_factor
                     # current_move_score += distance_change * aggression_factor
                     # score_explanation.append(("Advancing towards the enemy", (distance_change * aggression_factor)))
+                elif distance_change > 0:
+                    best_distance_score = ("None", 0)
+                    break
                 else:
                     total_distance_score = ((-distance_change) * aggression_factor) * (1 / (len(my_list) / len(opponent_list)))
                     if total_distance_score > best_distance_score[1]:
@@ -443,10 +449,13 @@ def one_player():
 #one_player()
 print_board()
 
-for x in range(0, 500):
+for x in range(0, 1000):
     print("Move {}".format(x + 1))
-    if len(white_list) == 0 or len(black_list) == 0:
-        print("Game over!")
+    if len(white_list) == 0:
+        print("B wins!")
+        break
+    elif len(black_list) == 0:
+        print("W wins!")
         break
     if x % 2 == 0:
         print("W's move")

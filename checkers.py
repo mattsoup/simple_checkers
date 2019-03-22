@@ -114,6 +114,9 @@ def update_board(piece, my_move, opponent_list, jump = False):
     board[my_move[0]][my_move[1]] = piece.color
     piece.x = my_move[0]
     piece.y = my_move[1]
+    if piece.x == board_size - 1:
+        piece.kinged = True
+        piece.color = "W"
 
 def identify_piece(coords, piece_list):
     for piece in piece_list:
@@ -404,9 +407,41 @@ def evaluate_surroundings(piece, my_list, opponent_list):
     # print(best_move_score, best_moves, best_explanation)
     return best_move_score, best_moves, best_explanation
 
-def one_player():
+def ask_for_piece(piece_list):
+    coords = input("Piece to move (in format: x,y): ")
+    coords = (int(coords.split(",")[0]) - 1, int(coords.split(",")[1]) - 1)
+    piece = identify_piece(coords, white_list)
+
+    while piece == False:
+        coords = input("Piece to move (in format: x,y): ")
+        coords = (int(coords.split(",")[0]) - 1, int(coords.split(",")[1]) - 1)
+        piece = identify_piece(coords, white_list)
+
+    return piece
+
+def ask_for_move(piece, opponent_list, turn):
+    valid = False
+    while valid == False:
+        move = input("Where do you want to move it? ")
+        if move.upper() == "REDO":
+            one_player(turn)
+        move = (int(move.split(",")[0]) - 1, int(move.split(",")[1]) - 1)
+
+        if move not in piece.potential_moves() and (abs(move[0] - piece.x), abs(move[1] - piece.y)) == (2,2):
+            print("I've got my eye on you O_o")
+            valid = one_player_check_if_valid_jump(move, (piece.x, piece.y), black_list)
+            if valid == True:
+                jump = True
+        elif move in piece.potential_moves() and board[move[0]][move[1]] == "-":
+            valid = True
+        else:
+            print("WHATCHU DOIN THERE")
+
+    return move
+
+
+def one_player(turn):
     game_over = False
-    turn = 0
     while game_over == False:
         # print("W: {}".format(white_list))
         # print("B: {}".format(black_list))
@@ -414,41 +449,12 @@ def one_player():
         piece = False
         jump = False
         if turn % 2 == 0:
-            coords = input("Piece to move (in format: x,y): ")
-            coords = (int(coords.split(",")[0]) - 1, int(coords.split(",")[1]) - 1)
-            piece = identify_piece(coords, white_list)
-
-            while piece == False:
-                coords = input("Piece to move (in format: x,y): ")
-                coords = (int(coords.split(",")[0]) - 1, int(coords.split(",")[1]) - 1)
-                piece = identify_piece(coords, white_list)
-
+            piece = ask_for_piece(white_list)
+            move = ask_for_move(piece, black_list, turn)
             # while piece not in white_list:
             #     piece = input("Piece to move (in format: x,y): ")
             #     piece = (int(piece.split(",")[0] - 1), int(piece.split(",")[1]) - 1)
 
-            while valid == False:
-                move = input("Where do you want to move it? ")
-                move = (int(move.split(",")[0]) - 1, int(move.split(",")[1]) - 1)
-
-                if move not in piece.potential_moves() and (abs(move[0] - piece.x), abs(move[1] - piece.y)) == (2,2):
-                    print("I've got my eye on you O_o")
-                    valid = one_player_check_if_valid_jump(move, (piece.x, piece.y), black_list)
-                    if valid == True:
-                        jump = True
-                elif move in piece.potential_moves() and board[move[0]][move[1]] == "-":
-                    valid = True
-
-                # if move[0] < 0 or move[0] >= board_size or move[1] < 0 or move[1] >= board_size:
-                #     print("That's not on the board!")
-                # elif ((move[0] - piece[0]), abs(move[1] - piece[1])) == (1,1): # Can only move down the board
-                #     print("Checking if valid move")
-                #     valid = one_player_check_if_valid_move("W", move, piece, white_list, black_list)
-                # elif (abs(move[0] - piece[0]), abs(move[1] - piece[1])) == (2,2):
-                #     print("Checking if valid jump")
-                #     valid = one_player_check_if_valid_jump(move, piece, white_list, black_list)
-                else:
-                    print("WHATCHU DOIN THERE")
 
             update_board(piece, move, black_list, jump)
             print_board()
@@ -460,10 +466,10 @@ def one_player():
         turn += 1
         if len(white_list) == 0 or len(black_list) == 0:
             print("Game over!")
-            break
+            game_over = True
 
 print_board()
-one_player()
+one_player(0)
 
 # for turn in range(0, 1000):
 #     print("Move {}".format(turn + 1))

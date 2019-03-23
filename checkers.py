@@ -8,7 +8,6 @@ class MoveScores():
     def __init__(self, score_types):
         if score_types.upper() == "ZEROS":
             self.jump_score = 0
-            self.valid_score = 0
             self.death_score = 0
             self.avoid_death_score = 0
             self.provide_defense_score = 0
@@ -20,7 +19,6 @@ class MoveScores():
 
         elif score_types.upper() == "RANDOM":
             self.jump_score = random.randint(-10, 10)
-            self.valid_score = 1
             self.death_score = random.randint(-10, 10)
             self.avoid_death_score = random.randint(-10, 10)
             self.provide_defense_score = random.randint(-10, 10)
@@ -32,7 +30,6 @@ class MoveScores():
 
         elif score_types.upper() == "PRE-DEFINED":
             self.jump_score = 5
-            self.valid_score = 1
             self.death_score = -3
             self.avoid_death_score = 2
             self.provide_defense_score = 2
@@ -60,7 +57,7 @@ class PieceAttributes():
 
 def game_setup(board_size):
     board = [["-"] * board_size for x in range(board_size + 1)]
-    R = MoveScores("zeros")
+    R = MoveScores("random")
     red_list = []
     for y in range(-1, board_size, 2):
         for x in range(0, 3):
@@ -77,7 +74,7 @@ def game_setup(board_size):
         if piece.y < 0 or piece.y > board_size:
             red_list.remove(piece)
 
-    B = MoveScores("zeros")
+    B = MoveScores("pre-defined")
     black_list = []
     for y in range(0, board_size, 2):
         for x in range(1, 4):
@@ -423,6 +420,7 @@ def computers_only():
     for turn in range(0, 1000):
         if verbose == True:
             print_board()
+
         if len(red_list) == 0:
             return "B"
         elif len(black_list) == 0:
@@ -433,7 +431,7 @@ def computers_only():
 
         if turn % 2 == 0:
             if verbose == True:
-                print("W's move")
+                print("R's move")
             stuck = pick_move(red_list, black_list, board)
         else:
             if verbose == True:
@@ -447,17 +445,29 @@ def computers_only():
             else:
                 return "R"
 
-
         if turn == 999:
-            if verbose == True:
-                print("It was a draw")
             return "Draw"
 
+def print_scores(piece):
+    # for attr, value in piece.move_scores.__dict__.items():
+    #     print(attr, "\t", end = "")
+    # print("\n")
+    for attr, value in piece.move_scores.__dict__.items():
+        print(value, "\t", end = "")
+    # print("\n")
+    # for score in dir(piece.move_scores):
+    #     if "__" not in score:
+    #         print(score, piece.move_scores)
+    return
+
 verbose = False
+# verbose = True
 if __name__ == "__main__":
     board_size = 8
     red_list, black_list, board = game_setup(board_size)
+    print_scores(red_list[0])
+    # print_scores(black_list[0])
     # print_board()
     # winner = one_player(0)
     winner = computers_only()
-    print("{} wins!".format(winner), end = "")
+    print("{}".format(winner))

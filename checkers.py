@@ -3,9 +3,6 @@
 import random
 import math
 
-board_size = 8
-
-board = [["-"] * board_size for x in range(board_size + 1)]
 
 class MoveScores():
     def __init__(self, score_types):
@@ -61,48 +58,48 @@ class PieceAttributes():
         else:
             return [(self.x - 1, self.y - 1), (self.x - 1, self.y + 1)]
 
-R = MoveScores("zeros")
-red_list = []
-for y in range(-1, board_size, 2):
-    for x in range(0, 3):
-        my_piece = PieceAttributes(R)
-        my_piece.color = "r"
-        my_piece.x = x
-        if x == 1:
-            my_piece.y = y
-        else:
-            my_piece.y = y - 1
-        red_list.append(my_piece)
+def game_setup(board_size):
+    board = [["-"] * board_size for x in range(board_size + 1)]
+    R = MoveScores("zeros")
+    red_list = []
+    for y in range(-1, board_size, 2):
+        for x in range(0, 3):
+            my_piece = PieceAttributes(R)
+            my_piece.color = "r"
+            my_piece.x = x
+            if x == 1:
+                my_piece.y = y
+            else:
+                my_piece.y = y - 1
+            red_list.append(my_piece)
 
-for piece in red_list[:]: # Slice cuz ya can't iterate over a list and change it too!
-    if piece.y < 0 or piece.y > board_size:
-        red_list.remove(piece)
+    for piece in red_list[:]: # Slice cuz ya can't iterate over a list and change it too!
+        if piece.y < 0 or piece.y > board_size:
+            red_list.remove(piece)
 
-B = MoveScores("zeros")
-black_list = []
-for y in range(0, board_size, 2):
-    for x in range(1, 4):
-        my_piece = PieceAttributes(B)
-        my_piece.color = "b"
-        my_piece.x = board_size - x
-        if x == 2:
-            my_piece.y = y
-        else:
-            my_piece.y = y + 1
-        black_list.append(my_piece)
+    B = MoveScores("zeros")
+    black_list = []
+    for y in range(0, board_size, 2):
+        for x in range(1, 4):
+            my_piece = PieceAttributes(B)
+            my_piece.color = "b"
+            my_piece.x = board_size - x
+            if x == 2:
+                my_piece.y = y
+            else:
+                my_piece.y = y + 1
+            black_list.append(my_piece)
 
-for piece in black_list[:]:
-    if  piece.y < 0 or piece.y > board_size:
-        black_list.remove(piece)
+    for piece in black_list[:]:
+        if  piece.y < 0 or piece.y > board_size:
+            black_list.remove(piece)
 
-# red_list = [(0,0)]
-# black_list = [(1,1), (3,3), (5,5)]
+    for piece in red_list:
+            board[piece.x][piece.y] = "r"
+    for piece in black_list:
+            board[piece.x][piece.y] = "b"
 
-for piece in red_list:
-        board[piece.x][piece.y] = "r"
-for piece in black_list:
-        board[piece.x][piece.y] = "b"
-
+    return red_list, black_list, board
 
 def print_board():
     for x in range(board_size):
@@ -237,7 +234,8 @@ def pick_move(my_list, opponent_list, board):
             chosen_move_list.append(moves)
             chosen_explanation_list.append(explanations)
 
-    assert len(chosen_list) > 0, "No valid moves"
+    if len(chosen_list) == 0:
+        return True
 
     chosen_index = random.randint(0, len(chosen_list) - 1) # Randomly chooses piece from highest scoring pieces
     chosen_one = chosen_list[chosen_index]
@@ -248,9 +246,10 @@ def pick_move(my_list, opponent_list, board):
     my_explanation = chosen_explanation_list[chosen_index][my_move_index]
 
     valid, my_move, extra_jump = check_if_valid_move(my_move, current_position, my_list, opponent_list)
-    print("Moving {} to {} because:".format((chosen_one.x, chosen_one.y), (my_move)))
-    for (reason, score) in my_explanation:
-        print("{}: {}".format(reason, score))
+    if verbose == True:
+        print("Moving {} to {} because:".format((chosen_one.x, chosen_one.y), (my_move)))
+        for (reason, score) in my_explanation:
+            print("{}: {}".format(reason, score))
 
     # while extra_jump == True:
     #     print("trying for another jump")
@@ -270,7 +269,8 @@ def pick_move(my_list, opponent_list, board):
         chosen_one.kinged = True
         chosen_one.color = "B"
     board[x][y] = chosen_one.color
-    print_board()
+
+    return False
 
 def evaluate_surroundings(piece, my_list, opponent_list):
     my_potential_moves = piece.potential_moves()
@@ -286,8 +286,8 @@ def evaluate_surroundings(piece, my_list, opponent_list):
         valid, my_move, _extra_jump = check_if_valid_move(move, current_position, my_list, opponent_list, True)
         if valid == True: # Valid move
             potential_piece = make_piece(my_move[0], my_move[1], piece.color)
-            current_move_score += piece.move_scores.valid_score
-            score_explanation.append(("Valid move", piece.move_scores.valid_score))
+            # current_move_score += piece.move_scores.valid_score
+            # score_explanation.append(("Valid move", piece.move_scores.valid_score))
             if my_move != move:
                 potential_jump = True
                 current_move_score += piece.move_scores.jump_score
@@ -399,11 +399,11 @@ def one_player(turn):
     game_over = False
     while game_over == False:
         if len(red_list) == 0:
-            print("B wins!")
+            return "B"
             game_over = True
 
         if len(black_list) == 0:
-            print("R wins!")
+            return "R"
             game_over = True
 
         if turn % 2 == 0:
@@ -419,26 +419,45 @@ def one_player(turn):
 
         turn += 1
 
-print_board()
-# one_player(0)
+def computers_only():
+    for turn in range(0, 1000):
+        if verbose == True:
+            print_board()
+        if len(red_list) == 0:
+            return "B"
+        elif len(black_list) == 0:
+            return "R"
 
-for turn in range(0, 1000):
-    print("Move {}".format(turn + 1))
-    if len(red_list) == 0:
-        print("B wins!")
-        break
-    elif len(black_list) == 0:
-        print("R wins!")
-        break
-    if turn % 2 == 0:
-        print("W's move")
-        # moves = [piece.(potential_moves() for piece in red_list]
-        # moves = list(potential_moves(red_list, "R"))
-        pick_move(red_list, black_list, board)
-    else:
-        print("B's move")
-        # moves = [list(potential_moves(piece)) for piece in black_list]
-        # moves = list(potential_moves(black_list, "B"))
-        pick_move(black_list, red_list, board)
-    if turn == 999:
-        print("It was a draw")
+        if verbose == True:
+            print("Move {}".format(turn + 1))
+
+        if turn % 2 == 0:
+            if verbose == True:
+                print("W's move")
+            stuck = pick_move(red_list, black_list, board)
+        else:
+            if verbose == True:
+                print("B's move")
+            stuck = pick_move(black_list, red_list, board)
+        if stuck == True:
+            if turn <= 30:
+                return "Draw"
+            elif turn % 2 == 0:
+                return "B"
+            else:
+                return "R"
+
+
+        if turn == 999:
+            if verbose == True:
+                print("It was a draw")
+            return "Draw"
+
+verbose = False
+if __name__ == "__main__":
+    board_size = 8
+    red_list, black_list, board = game_setup(board_size)
+    # print_board()
+    # winner = one_player(0)
+    winner = computers_only()
+    print("{} wins!".format(winner), end = "")

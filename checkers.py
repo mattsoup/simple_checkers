@@ -325,6 +325,10 @@ def evaluate_surroundings(piece, my_list, opponent_list):
                     total_distance_score = ((-distance_change) * piece.move_scores.coward_factor) * (1 / (len(my_list) / len(opponent_list)))
                     if total_distance_score > best_distance_score[1]:
                         best_distance_score = ("Running away!", total_distance_score)
+            for opponent_piece in opponent_list:
+                if distance_to_opponent(potential_piece, opponent_piece) <= nearest_opponent_distance:
+                    best_distance_score = ("None", 0):
+
             if best_distance_score != ("None", 0):
                 current_move_score += best_distance_score[1]
                 score_explanation.append(best_distance_score)
@@ -333,11 +337,12 @@ def evaluate_surroundings(piece, my_list, opponent_list):
                 if teammate != piece:
                     if distance_to_opponent(teammate, potential_piece) == 1 and teammate.x != 0 and teammate.x != board_size - 1 and teammate.y != 0 and teammate.y != board_size - 1:
                         for opponent_piece in opponent_list:
-                            future_death, jump = check_future_death(opponent_piece, (teammate.x, teammate.y), (teammate.x, teammate.y))
-                            if future_death == True and jump == (potential_piece.x, potential_piece.y): # Valid move and if I don't move I could get jumped next opponent move
-                                current_move_score += piece.move_scores.provide_defense_score
-                                score_explanation.append(("Providing defense", piece.move_scores.provide_defense_score))
-                                break
+                            if (teammate.x, teammate.y) in opponent_piece.potential_moves():
+                                future_death, jump = check_future_death(opponent_piece, (teammate.x, teammate.y), (teammate.x, teammate.y))
+                                if future_death == True and jump == (potential_piece.x, potential_piece.y): # Valid move and if I don't move I could get jumped next opponent move
+                                    current_move_score += piece.move_scores.provide_defense_score
+                                    score_explanation.append(("Providing defense", piece.move_scores.provide_defense_score))
+                                    break
 
 
             if piece.kinged == False:

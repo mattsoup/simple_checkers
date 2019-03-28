@@ -57,7 +57,7 @@ class PieceAttributes():
 
 def game_setup(board_size):
     board = [["-"] * board_size for x in range(board_size + 1)]
-    R = MoveScores("pre-defined")
+    R = MoveScores("random")
     red_list = []
     for y in range(-1, board_size, 2):
         for x in range(0, 3):
@@ -74,7 +74,7 @@ def game_setup(board_size):
         if piece.y < 0 or piece.y > board_size:
             red_list.remove(piece)
 
-    B = MoveScores("pre-defined")
+    B = MoveScores("zeros")
     black_list = []
     for y in range(0, board_size, 2):
         for x in range(1, 4):
@@ -327,7 +327,7 @@ def evaluate_surroundings(piece, my_list, opponent_list):
                         best_distance_score = ("Running away!", total_distance_score)
             for opponent_piece in opponent_list:
                 if distance_to_opponent(potential_piece, opponent_piece) <= nearest_opponent_distance:
-                    best_distance_score = ("None", 0):
+                    best_distance_score = ("None", 0)
 
             if best_distance_score != ("None", 0):
                 current_move_score += best_distance_score[1]
@@ -434,9 +434,9 @@ def computers_only():
             print_board()
 
         if len(red_list) == 0:
-            return "B"
+            return -1, turn,  len(black_list) / 12
         elif len(black_list) == 0:
-            return "R"
+            return 1, turn, len(red_list) / 12
 
         if verbose == True:
             print("Move {}".format(turn + 1))
@@ -451,29 +451,33 @@ def computers_only():
             stuck = pick_move(black_list, red_list, board)
         if stuck == True:
             if turn <= 30:
-                return "Draw"
+                return 0, turn, abs(len(red_list) - len(black_list)) / 12
             elif turn % 2 == 0:
-                return "B"
+                return -1, turn, abs(len(red_list) - len(black_list)) / 12
             else:
-                return "R"
+                return 1, turn, abs(len(red_list) - len(black_list)) / 12
 
         if turn == 999:
-            return "Draw"
+            return 0, 1000, abs(len(red_list) - len(black_list)) / 12
 
 def print_scores(piece):
     for attr, value in piece.move_scores.__dict__.items():
+        if attr in ("jump_score", "death_score", "avoid_death_score", "provide_defense_score", "distance_to_king_score"):
+            value = value / 10
         print(value, "\t", end = "")
 
     return
 
 verbose = False
-verbose = True
+# verbose = True
 if __name__ == "__main__":
     board_size = 8
     red_list, black_list, board = game_setup(board_size)
+    # print_scores(red_list[0])
     print_scores(red_list[0])
     # print_scores(black_list[0])
-    print_board()
-    winner = one_player(0)
-    # winner = computers_only()
-    print("{}".format(winner))
+    # print_board()
+    # winner = one_player(0)
+    winner, turns, ratio = computers_only()
+    turns = 1 - (turns / 1000)
+    print("{}\t{}\t{}".format(winner, turns, ratio))

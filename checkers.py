@@ -18,15 +18,15 @@ class MoveScores():
             self.coward_factor = 0
 
         elif score_types.upper() == "RANDOM":
-            self.jump_score = random.randint(-10, 10)
-            self.death_score = random.randint(-10, 10)
-            self.avoid_death_score = random.randint(-10, 10)
-            self.provide_defense_score = random.randint(-10, 10)
-            self.distance_to_king_score = random.randint(-10, 10)
-            self.distance_to_king_factor = random.randint(-10, 10) / 10
-            self.aggression_threshhold = random.randint(-10, 10) / 10
-            self.aggression_factor = random.randint(-10, 10) / 10
-            self.coward_factor = random.randint(-10, 10) / 10
+            self.jump_score = random.randint(-100, 100) / 10
+            self.death_score = random.randint(-100, 100) / 10
+            self.avoid_death_score = random.randint(-100, 100) / 10
+            self.provide_defense_score = random.randint(-100, 100) / 10
+            self.distance_to_king_score = random.randint(-100, 100) / 10
+            self.distance_to_king_factor = random.randint(-100, 100) / 100
+            self.aggression_threshhold = random.randint(-100, 100) / 100
+            self.aggression_factor = random.randint(-100, 100) / 100
+            self.coward_factor = random.randint(-100, 100) / 100
 
         elif score_types.upper() == "PRE-DEFINED":
             self.jump_score = 5
@@ -428,7 +428,7 @@ def one_player(turn):
 
         turn += 1
 
-def computers_only():
+def computers_only(red_list, black_list, board):
     for turn in range(0, 1000):
         if verbose == True:
             print_board()
@@ -478,6 +478,6 @@ if __name__ == "__main__":
     # print_scores(black_list[0])
     # print_board()
     # winner = one_player(0)
-    winner, turns, ratio = computers_only()
+    winner, turns, ratio = computers_only(red_list, black_list, board)
     turns = 1 - (turns / 1000)
     print("{}\t{}\t{}".format(winner, turns, ratio))

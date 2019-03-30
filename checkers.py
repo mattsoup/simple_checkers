@@ -98,7 +98,7 @@ def game_setup(board_size):
 
     return red_list, black_list, board
 
-def print_board():
+def print_board(board_size):
     for x in range(board_size):
         for y in range(board_size):
             print(board[y][x], end = "\t")
@@ -157,10 +157,10 @@ def one_player_check_if_valid_move(player, my_move, current_position, my_list, o
         return True
 
 
-def check_if_opponent(my_move, current_position, my_list, opponent_list, board_size, skip = False):
+def check_if_opponent(my_move, current_position, my_list, opponent_list, board, skip = False):
     direction = (current_position[0] - my_move[0], current_position[1] - my_move[1])
     jump = (my_move[0] - direction[0], my_move[1] - direction[1])
-    if jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size\
+    if jump[0] >= 0 and jump[0] < len(board) - 1 and jump[1] >= 0 and jump[1] < len(board) - 1\
     and board[jump[0]][jump[1]] == "-":
         if skip is False:
             board[my_move[0]][my_move[1]] = "-"
@@ -172,34 +172,34 @@ def check_if_opponent(my_move, current_position, my_list, opponent_list, board_s
         return False, None, None
 
 
-def check_future_death(opponent_piece, my_move, current_position, board_size, potential_jump = False):
+def check_future_death(opponent_piece, my_move, current_position, board, potential_jump = False):
     direction = (opponent_piece.x - my_move[0], opponent_piece.y - my_move[1])
     jump = (my_move[0] - direction[0], my_move[1] - direction[1])
 
-    if my_move[0] == 0 or my_move[0] == board_size - 1 or my_move[1] == 0 or\
-    my_move[1] == board_size - 1:
+    if my_move[0] == 0 or my_move[0] == len(board) - 1 - 1 or my_move[1] == 0 or\
+    my_move[1] == len(board) - 1 - 1:
         return False, None
     if jump == current_position:
         return True, jump
-    if jump[0] >= 0 and jump[0] < board_size and jump[1] >= 0 and jump[1] < board_size:
+    if jump[0] >= 0 and jump[0] < len(board) - 1 and jump[1] >= 0 and jump[1] < len(board) - 1:
         if board[jump[0]][jump[1]] == "-":
             return True, jump
         elif potential_jump == True and board[jump[0]][jump[1]].upper() == opponent_piece.color.upper():
             return True, jump
     return False, None
 
-def check_if_valid_move(my_move, current_position, my_list, opponent_list, board_size, skip = False):
-    if my_move[0] < 0 or my_move[0] >= board_size or my_move[1] < 0 or my_move[1] >= board_size:
+def check_if_valid_move(my_move, current_position, my_list, opponent_list, board, skip = False):
+    if my_move[0] < 0 or my_move[0] >= len(board) - 1 or my_move[1] < 0 or my_move[1] >= len(board) - 1:
         return False, None, None
     elif (my_move[0], my_move[1]) in make_tuples(my_list):
         return False, None, None
     elif (my_move[0], my_move[1]) in make_tuples(opponent_list):
-        return check_if_opponent(my_move, current_position, my_list, opponent_list, skip)
+        return check_if_opponent(my_move, current_position, my_list, opponent_list, board, skip)
     else:
         return True, my_move, None
 
 
-def distance_to_king(piece):
+def distance_to_king(piece, board_size):
     if piece.color.upper() == "R":
         distance = board_size - 1 - piece.x
     else:
@@ -217,7 +217,7 @@ def pick_move(my_list, opponent_list, board, board_size):
     chosen_move_list = []
     chosen_explanation_list = []
     for piece in my_list:
-        move_score, moves, explanations = evaluate_surroundings(piece, my_list, opponent_list, board_size)
+        move_score, moves, explanations = evaluate_surroundings(piece, my_list, opponent_list, board, board_size)
 
         if len(moves) == 0:
             continue
@@ -242,7 +242,7 @@ def pick_move(my_list, opponent_list, board, board_size):
     my_move = chosen_move_list[chosen_index][my_move_index] # Randomly chooses from highest scoring moves from highest scoring piece
     my_explanation = chosen_explanation_list[chosen_index][my_move_index]
 
-    my_move, extra_jump = check_if_valid_move(my_move, current_position, my_list, opponent_list, board_size)
+    _, my_move, _extra_jump = check_if_valid_move(my_move, current_position, my_list, opponent_list, board)
     if verbose is True:
         print("Moving {} to {} because:".format((chosen_one.x, chosen_one.y), (my_move)))
         for (reason, score) in my_explanation:
@@ -265,7 +265,7 @@ def pick_move(my_list, opponent_list, board, board_size):
 
     return False
 
-def evaluate_surroundings(piece, my_list, opponent_list, board_size):
+def evaluate_surroundings(piece, my_list, opponent_list, board, board_size):
     my_potential_moves = piece.potential_moves()
 
     best_move_score = -10000 # Arbitrarily small score
@@ -276,7 +276,7 @@ def evaluate_surroundings(piece, my_list, opponent_list, board_size):
         potential_jump = False
         current_move_score = 0
         score_explanation = []
-        valid, my_move, _extra_jump = check_if_valid_move(move, current_position, my_list, opponent_list, True)
+        valid, my_move, _extra_jump = check_if_valid_move(move, current_position, my_list, opponent_list, board, True)
         if valid is True: # Valid move
             potential_piece = make_piece(my_move[0], my_move[1], piece.color)
             # current_move_score += piece.move_scores.valid_score
@@ -298,17 +298,17 @@ def evaluate_surroundings(piece, my_list, opponent_list, board_size):
                 if distance_to_opponent(potential_piece, opponent_piece) == 1 and\
                 my_move in opponent_piece.potential_moves() and (opponent_piece.x, opponent_piece.y) != move:
                     future_death, _ = check_future_death(opponent_piece, (potential_piece.x, potential_piece.y)\
-                                                         , current_position, potential_jump)
+                                                         , current_position, board, potential_jump)
                     if future_death is True: # Valid move that could result in being jumped next opponent move
                         current_move_score += piece.move_scores.death_score
                         score_explanation.append(("Expected death", piece.move_scores.death_score))
 
-                if current_position[0] != 0 and current_position[0] != board_size - 1\
-                and current_position[1] != 0 and current_position[1] != board_size - 1\
+                if current_position[0] != 0 and current_position[0] != len(board) - 1 - 1\
+                and current_position[1] != 0 and current_position[1] != len(board) - 1 - 1\
                 and distance_to_opponent(piece, opponent_piece) == 1 and current_position\
                 in opponent_piece.potential_moves():
                     future_death, _ = check_future_death(opponent_piece, current_position,\
-                                                         current_position, board_size)
+                                                         current_position, board)
                     if future_death is True: # Valid move and if I don't move I could get jumped next opponent move
                         current_move_score += piece.move_scores.avoid_death_score
                         score_explanation.append(("Avoiding death", piece.move_scores.avoid_death_score))
@@ -344,7 +344,7 @@ def evaluate_surroundings(piece, my_list, opponent_list, board_size):
                             if (teammate.x, teammate.y) in opponent_piece.potential_moves():
                                 future_death, jump = check_future_death(opponent_piece,\
                                                      (teammate.x, teammate.y), (teammate.x, teammate.y),\
-                                                     board_size)
+                                                     board)
                                 if future_death is True and jump == (potential_piece.x, potential_piece.y): # Valid move and if I don't move I could get jumped next opponent move
                                     current_move_score += piece.move_scores.provide_defense_score
                                     score_explanation.append(("Providing defense", piece.move_scores.provide_defense_score))
@@ -352,7 +352,7 @@ def evaluate_surroundings(piece, my_list, opponent_list, board_size):
 
 
             if piece.kinged == False:
-                distance = 1 - (distance_to_king(potential_piece) / board_size)
+                distance = 1 - (distance_to_king(potential_piece, board_size) / board_size)
                 current_move_score += piece.move_scores.distance_to_king_factor * (distance * piece.move_scores.distance_to_king_score)
                 score_explanation.append(("Moving closer to being kinged", piece.move_scores.distance_to_king_factor * (distance * piece.move_scores.distance_to_king_score)))
 
@@ -437,15 +437,15 @@ def computers_only(red_list, black_list, board, board_size):
         board_size
     except NameError:
         board_size = len(board) - 1
-    print(board_size)
+
     for turn in range(0, 1000):
         if verbose == True:
-            print_board()
+            print_board(board_size)
 
         if len(red_list) == 0:
-            return -1, turn,  len(black_list) / 12
+            return -1, turn,  len(black_list)
         elif len(black_list) == 0:
-            return 1, turn, len(red_list) / 12
+            return 1, turn, len(red_list)
 
         if verbose == True:
             print("Move {}".format(turn + 1))
@@ -460,14 +460,14 @@ def computers_only(red_list, black_list, board, board_size):
             stuck = pick_move(black_list, red_list, board, board_size)
         if stuck == True:
             if turn <= 30:
-                return 0, turn, abs(len(red_list) - len(black_list)) / 12
+                return 0, turn, abs(len(red_list) - len(black_list))
             elif turn % 2 == 0:
-                return -1, turn, abs(len(red_list) - len(black_list)) / 12
+                return -1, turn, abs(len(red_list) - len(black_list))
             else:
-                return 1, turn, abs(len(red_list) - len(black_list)) / 12
+                return 1, turn, abs(len(red_list) - len(black_list))
 
         if turn == 999:
-            return 0, 1000, abs(len(red_list) - len(black_list)) / 12
+            return 0, 1000, abs(len(red_list) - len(black_list))
 
 def print_scores(piece):
     for attr, value in piece.move_scores.__dict__.items():

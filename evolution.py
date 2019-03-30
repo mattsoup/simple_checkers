@@ -21,10 +21,17 @@ def run_generations():
     """
     Run the combination of move scores XXX (10?) times
     """
-    red_list, black_list, board = checkers.game_setup(8)
-    for x in range(10):
+    score_list = []
+    for x in range(50):
+        red_list, black_list, board = checkers.game_setup(8)
         winner, turns, ratio = checkers.computers_only(red_list, black_list, board, 8)
-
+        turns = 1 - (turns / 1000)
+        score = (winner * turns * ratio)
+        score_list.append(score)
+        print(winner, turns, ratio)
+    print(score_list)
+    print(np.average(score_list))
+    print(np.median(score_list))
     return
 
 def calculate_scores():

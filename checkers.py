@@ -6,7 +6,18 @@ import math
 
 class MoveScores():
     def __init__(self, score_types):
-        if score_types.upper() == "ZEROS":
+        if type(score_types) is not str:
+            self.jump_score = score_types[0] / 10
+            self.death_score = score_types[1] / 10
+            self.avoid_death_score = score_types[2] / 10
+            self.provide_defense_score = score_types[3] / 10
+            self.distance_to_king_score = score_types[4] / 10
+            self.distance_to_king_factor = score_types[5] / 100
+            self.aggression_threshhold = score_types[6] / 100
+            self.aggression_factor = score_types[7] / 100
+            self.coward_factor = score_types[8] / 100
+
+        elif score_types.upper() == "ZEROS":
             self.jump_score = 0
             self.death_score = 0
             self.avoid_death_score = 0
@@ -55,10 +66,13 @@ class PieceAttributes():
         else:
             return [(self.x - 1, self.y - 1), (self.x - 1, self.y + 1)]
 
-def game_setup(board_size):
-    board = [["-"] * board_size for x in range(board_size + 1)]
-    R = MoveScores("random")
-    red_list = []
+def game_setup(board_size, score_list = []):
+    my_board = [["-"] * board_size for x in range(board_size + 1)]
+    if len(score_list) != 0:
+        R = MoveScores(score_list)
+    else:
+        R = MoveScores("Random")
+    my_red_list = []
     for y in range(-1, board_size, 2):
         for x in range(0, 3):
             my_piece = PieceAttributes(R)
@@ -68,14 +82,14 @@ def game_setup(board_size):
                 my_piece.y = y
             else:
                 my_piece.y = y - 1
-            red_list.append(my_piece)
+            my_red_list.append(my_piece)
 
-    for piece in red_list[:]: # Slice cuz ya can't iterate over a list and change it too!
+    for piece in my_red_list[:]: # Slice cuz ya can't iterate over a list and change it too!
         if piece.y < 0 or piece.y > board_size:
-            red_list.remove(piece)
+            my_red_list.remove(piece)
 
     B = MoveScores("zeros")
-    black_list = []
+    my_black_list = []
     for y in range(0, board_size, 2):
         for x in range(1, 4):
             my_piece = PieceAttributes(B)
@@ -85,22 +99,22 @@ def game_setup(board_size):
                 my_piece.y = y
             else:
                 my_piece.y = y + 1
-            black_list.append(my_piece)
+            my_black_list.append(my_piece)
 
-    for piece in black_list[:]:
+    for piece in my_black_list[:]:
         if  piece.y < 0 or piece.y > board_size:
-            black_list.remove(piece)
+            my_black_list.remove(piece)
 
-    for piece in red_list:
-            board[piece.x][piece.y] = "r"
-    for piece in black_list:
-            board[piece.x][piece.y] = "b"
+    for piece in my_red_list:
+        my_board[piece.x][piece.y] = "r"
+    for piece in my_black_list:
+        my_board[piece.x][piece.y] = "b"
 
-    return red_list, black_list, board
+    return my_red_list, my_black_list, my_board
 
-def print_board(board_size):
-    for x in range(board_size):
-        for y in range(board_size):
+def print_board(my_board_size):
+    for x in range(my_board_size):
+        for y in range(my_board_size):
             print(board[y][x], end = "\t")
         print("\n")
 
@@ -118,7 +132,7 @@ def make_tuples(piece_list):
 
 
 def update_board(piece, my_move, opponent_list, jump = False):
-    if jump == True:
+    if jump is True:
         print((int((my_move[0] + piece.x) / 2), int((my_move[1] + piece.y) / 2)))
         print(identify_piece(((my_move[0] + piece.x) / 2, (my_move[1] + piece.y) / 2), opponent_list))
         opponent_piece = identify_piece((int((my_move[0] + piece.x) / 2), int((my_move[1] + piece.y) / 2)), opponent_list)

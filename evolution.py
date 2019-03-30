@@ -23,7 +23,7 @@ def run_generations():
     """
     red_list, black_list, board = checkers.game_setup(8)
     for x in range(10):
-        winner, turns, ratio = checkers.computers_only(red_list, black_list, board)
+        winner, turns, ratio = checkers.computers_only(red_list, black_list, board, 8)
 
     return
 

@@ -54,9 +54,7 @@ def calculate_scores(run_list):
     Calculate the game scores for all the runs
     """
     result_list = np.array([run.calc_mean() for run in run_list])
-    for result in result_list:
-        print(result, end = "\t")
-    print("\n")
+    out.write("{}\t".format(np.mean(result_list)))
 
     result_list = result_list.argsort()[-int(len(run_list) * 0.1):]
     desired_scores = [run_list[x] for x in result_list]
@@ -71,25 +69,29 @@ def calculate_scores(run_list):
 
 def run_script():
     run_list = [CheckersRun(np.zeros(9)) for x in range(50)]
-    for run in run_list:
-        print(run.move_scores)
-    for x in range(100):
+    for x in range(500):
+        print("Done with {} generations\r".format(x), end = "")
         run_generations(run_list)
         run_list = calculate_scores(run_list)
 
         for run in run_list:
-            print(run.move_scores)
-        for run in run_list:
             run.mutate()
-        print("\n")
-        for run in run_list:
-            print(run.move_scores)
-        print("\n")
+        all_scores = np.empty((len(run_list), 9))
+        for x in range(len(run_list)):
+            for y in range(len(run_list[x].move_scores)):
+                all_scores[x][y] = run_list[x].move_scores[y]
+
+        out.write("\t".join(map(str, np.mean(all_scores, axis = 0))))
+        out.write("\n")
+        # for run in run_list:
+        #     print(run.move_scores)
+        # print("\n")
 
 
 
 
 if __name__ == "__main__":
+    out = open("500gens_random_v_zeros.txt", "w")
     run_script()
 
 

@@ -20,19 +20,6 @@ class CheckersRun():
     def calc_mean(self):
         return np.median(self.result_list)
 
-def pick_move_scores(scores_list):
-    """
-    Pick move scores to run checkers with
-    [jump_score, death_score, avoid_death_score, provide_defense_score, distance_to_king_score\
-     distance_to_king_factor, aggression_threshhold, aggression_factor, coward_factor]
-    """
-    for x in range(len(scores_list)):
-        if np.random.randint(0,2) == 0:
-            scores_list[x] = np.random.randint(scores_list[x], 5)
-
-    return scores_list
-
-
 
 def run_generations(run_list):
     """
@@ -43,8 +30,11 @@ def run_generations(run_list):
         for x in range(10):
             red_list, black_list, board = checkers.game_setup(8, run.move_scores)
             winner, turns, ratio = checkers.computers_only(red_list, black_list, board, 8)
-            turns = 1 - (turns / 1000)
-            result = (winner * turns * ratio)
+            turns = 1 - (turns / 500)
+            if winner == 0 and turns == 0:
+                result = ratio * 0.1
+            else:
+                result = (winner * turns * ratio)
             run.result_list.append(result)
 
     return
@@ -67,8 +57,12 @@ def calculate_scores(run_list):
 
 
 
-def run_script():
-    run_list = [CheckersRun(np.zeros(9)) for x in range(50)]
+def run_script(run_list = []):
+    if run_list == []:
+        run_list = [CheckersRun(np.zeros(9)) for x in range(50)]
+    else:
+        run_list = [CheckersRun(run_list) for x in range(50)]
+
     for x in range(500):
         print("Done with {} generations\r".format(x), end = "")
         run_generations(run_list)
@@ -91,7 +85,12 @@ def run_script():
 
 
 if __name__ == "__main__":
-    out = open("500gens_random_v_zeros.txt", "w")
+    out = open("500gens_random_v_zeros.txt", "a+")
+    out.seek(0)
+    if len(out.readlines()) > 0:
+        out.seek(0)
+        last_run = list(map(float, out.readlines()[-1].strip().split("\t")))[1:]
+        run_script(last_run)
     run_script()
 
 

@@ -452,7 +452,7 @@ def computers_only(red_list, black_list, board, board_size):
     except NameError:
         board_size = len(board) - 1
 
-    for turn in range(0, 1000):
+    for turn in range(0, 500):
         if verbose == True:
             print_board(board_size)
 
@@ -480,8 +480,8 @@ def computers_only(red_list, black_list, board, board_size):
             else:
                 return 1, turn, abs(len(red_list) - len(black_list))
 
-        if turn == 999:
-            return 0, 1000, abs(len(red_list) - len(black_list))
+        if turn == 499:
+            return 1, 500, abs(len(red_list) - len(black_list))
 
 def print_scores(piece):
     for attr, value in piece.move_scores.__dict__.items():
@@ -502,5 +502,5 @@ if __name__ == "__main__":
     # print_board()
     # winner = one_player(0)
     winner, turns, ratio = computers_only(red_list, black_list, board, board_size)
-    turns = 1 - (turns / 1000)
+    turns = 1 - (turns / 500)
     print("{}\t{}\t{}".format(winner, turns, ratio))

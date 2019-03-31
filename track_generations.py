@@ -11,11 +11,11 @@ headers = ["Result", "Jump score", "Death score", "Avoid Death score", "Provide 
 
 runs = pd.read_csv("500gens_random_v_zeros.txt", sep = "\t", names = headers)
 
-results = runs.iloc[:,0]
+# results = runs.iloc[:,0]
 
-for x in range(len(runs) - 1):
+
+for x in range(0, 10):
+    print(x)
     plt.plot(runs.iloc[:,x])
-    plt.show()
 
-plt.plot(results)
-plt.show()
+    plt.show()

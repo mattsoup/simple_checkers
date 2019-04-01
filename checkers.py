@@ -88,7 +88,7 @@ def game_setup(board_size, score_list = []):
         if piece.y < 0 or piece.y > board_size:
             my_red_list.remove(piece)
 
-    B = MoveScores("zeros")
+    B = MoveScores("pre-defined")
     my_black_list = []
     for y in range(0, board_size, 2):
         for x in range(1, 4):
@@ -131,17 +131,17 @@ def make_tuples(piece_list):
     return coord_list
 
 
-def update_board(piece, my_move, opponent_list, jump = False):
+def update_board(piece, my_move, opponent_list, board, jump = False):
     if jump is True:
-        print((int((my_move[0] + piece.x) / 2), int((my_move[1] + piece.y) / 2)))
-        print(identify_piece(((my_move[0] + piece.x) / 2, (my_move[1] + piece.y) / 2), opponent_list))
+        # print((int((my_move[0] + piece.x) / 2), int((my_move[1] + piece.y) / 2)))
+        # print(identify_piece(((my_move[0] + piece.x) / 2, (my_move[1] + piece.y) / 2), opponent_list))
         opponent_piece = identify_piece((int((my_move[0] + piece.x) / 2), int((my_move[1] + piece.y) / 2)), opponent_list)
         opponent_list.remove(opponent_piece)
         board[int((my_move[0] + piece.x) / 2)][int((my_move[1] + piece.y) / 2)] = "-"
     board[piece.x][piece.y] = "-"
     piece.x = my_move[0]
     piece.y = my_move[1]
-    if piece.x == board_size - 1:
+    if piece.x == len(board) - 1 - 1:
         piece.kinged = True
         piece.color = "R"
     board[piece.x][piece.y] = piece.color
@@ -152,8 +152,7 @@ def identify_piece(coords, piece_list):
             return piece
     return False
 
-def one_player_check_if_valid_jump(my_move, current_position, opponent_list):
-    print(my_move, current_position, make_tuples(opponent_list))
+def one_player_check_if_valid_jump(my_move, current_position, opponent_list, board):
     if board[my_move[0]][my_move[1]] != "-":
         return False
     elif ((my_move[0] + current_position[0]) / 2, (my_move[1] + current_position[1]) / 2) in make_tuples(opponent_list):
@@ -162,10 +161,10 @@ def one_player_check_if_valid_jump(my_move, current_position, opponent_list):
         return False
 
 
-def one_player_check_if_valid_move(player, my_move, current_position, my_list, opponent_list, board_size):
+def one_player_check_if_valid_move(my_move, my_list, opponent_list, board_size):
     if my_move[0] < 0 or my_move[0] >= board_size or my_move[1] < 0 or my_move[1] >= board_size:
         return False
-    elif (my_move[0], my_move[1]) in my_list or (my_move[0], my_move[1]) in opponent_list:
+    elif (my_move[0], my_move[1]) in my_list or (my_move[0], my_move[1]) in make_tuples(opponent_list):
         return False
     else:
         return True
@@ -417,7 +416,7 @@ def ask_for_move(piece, opponent_list, turn):
     return move, jump
 
 
-def one_player(turn):
+def one_player(turn, red_list, black_list):
     game_over = False
     while game_over == False:
         if len(red_list) == 0:

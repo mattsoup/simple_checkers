@@ -9,7 +9,7 @@ headers = ["Result", "Jump score", "Death score", "Avoid Death score", "Provide 
            "Distance to King score", "Distance to King factor", "Aggression threshhold", \
            "Aggression factor", "Coward factor"]
 
-runs = pd.read_csv("500gens_random_v_zeros.txt", sep = "\t", names = headers)
+runs = pd.read_csv("500gens_random_v_1000gens.txt", sep = "\t", names = headers)
 
 # results = runs.iloc[:,0]
 

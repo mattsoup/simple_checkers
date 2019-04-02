@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import random
-import math
 
 
 class MoveScores():
@@ -124,6 +123,8 @@ def game_setup(board_size, score_list = []):
     return my_red_list, my_black_list, my_board
 
 def print_board(my_board_size):
+    """ Prints the board"""
+
     for x in range(my_board_size):
         for y in range(my_board_size):
             print(board[y][x], end = "\t")
@@ -131,6 +132,8 @@ def print_board(my_board_size):
 
 
 def make_piece(x, y, color):
+    """ Given x,y coordinates and a team color, makes an instance of PieceAttributes"""
+
     piece = PieceAttributes()
     piece.x = x
     piece.y = y
@@ -138,15 +141,18 @@ def make_piece(x, y, color):
     return piece
 
 def make_tuples(piece_list):
+    """ Makes a list of tuples with piece coordinates"""
+
     coord_list = [(piece.x, piece.y) for piece in piece_list]
     return coord_list
 
 
 def update_board(piece, my_move, opponent_list, board, jump = False):
+    """ Updates all the pieces on the board"""
+
     if jump is True:
-        # print((int((my_move[0] + piece.x) / 2), int((my_move[1] + piece.y) / 2)))
-        # print(identify_piece(((my_move[0] + piece.x) / 2, (my_move[1] + piece.y) / 2), opponent_list))
-        opponent_piece = identify_piece((int((my_move[0] + piece.x) / 2), int((my_move[1] + piece.y) / 2)), opponent_list)
+        opponent_piece = identify_piece((int((my_move[0] + piece.x) / 2),\
+                                         int((my_move[1] + piece.y) / 2)), opponent_list)
         opponent_list.remove(opponent_piece)
         board[int((my_move[0] + piece.x) / 2)][int((my_move[1] + piece.y) / 2)] = "-"
     board[piece.x][piece.y] = "-"
@@ -158,6 +164,8 @@ def update_board(piece, my_move, opponent_list, board, jump = False):
     board[piece.x][piece.y] = piece.color
 
 def identify_piece(coords, piece_list):
+    """ Given coordinates, determine which piece is being referenced"""
+
     for piece in piece_list:
         if (piece.x, piece.y) == coords:
             return piece
@@ -197,6 +205,8 @@ def check_if_opponent(my_move, current_position, my_list, opponent_list, board, 
 
 
 def check_future_death(opponent_piece, my_move, current_position, board, potential_jump = False):
+    """Check if a move would potentially result in being jumped the next move"""
+
     direction = (opponent_piece.x - my_move[0], opponent_piece.y - my_move[1])
     jump = (my_move[0] - direction[0], my_move[1] - direction[1])
 
@@ -213,6 +223,8 @@ def check_future_death(opponent_piece, my_move, current_position, board, potenti
     return False, None
 
 def check_if_valid_move(my_move, current_position, my_list, opponent_list, board, skip = False):
+    """ Checks if a given move is valid or not"""
+
     if my_move[0] < 0 or my_move[0] >= len(board) - 1 or my_move[1] < 0 or my_move[1] >= len(board) - 1:
         return False, None, None
     elif (my_move[0], my_move[1]) in make_tuples(my_list):
@@ -223,15 +235,18 @@ def check_if_valid_move(my_move, current_position, my_list, opponent_list, board
         return True, my_move, None
 
 
-def distance_to_king(piece, board_size):
+def distance_to_king(piece, my_board_size):
+    """Finds the distance a piece is from being kinged"""
+
     if piece.color.upper() == "R":
-        distance = board_size - 1 - piece.x
+        distance = my_board_size - 1 - piece.x
     else:
         distance = piece.x
     return distance
 
 def distance_to_opponent(piece, opponent):
-    # distance = abs(piece.x - opponent.x) + abs(piece.y - opponent.y) # Pretty sure Manhattan distance won't work for this
+    """ Finds the Chessboard distance between a piece and an opponent piece"""
+
     distance = max([abs(piece.x - opponent.x), abs(piece.y - opponent.y)]) # Chessboard distance
     return distance
 
@@ -396,7 +411,8 @@ def evaluate_surroundings(piece, my_list, opponent_list, board, board_size):
                 current_move_score += best_distance_score[1]
                 score_explanation.append(best_distance_score)
 
-            defend_teammate_score = defend_teammate(my_list, piece, potential_piece, opponent_list, board_size, board)
+            defend_teammate_score = defend_teammate(my_list, piece, potential_piece,\
+                                                    opponent_list, board_size, board)
             if defend_teammate_score != 0:
                 current_move_score += defend_teammate_score
                 score_explanation.append(("Providing defense", defend_teammate_score))

@@ -60,6 +60,17 @@ class MoveScores():
             self.aggression_factor = -0.65
             self.coward_factor = 1.16
 
+        elif score_types.upper() == "MYSTERY":
+            self.jump_score = -4.892
+            self.death_score = -.236
+            self.avoid_death_score = -.236
+            self.provide_defense_score = 6.588
+            self.distance_to_king_score = -6.312
+            self.distance_to_king_factor = .2366
+            self.aggression_threshhold = .3538
+            self.aggression_factor = -.159
+            self.coward_factor = -.4284
+
 class PieceAttributes():
     def __init__(self, my_move_scores = None):
         self.color = ""
@@ -69,8 +80,11 @@ class PieceAttributes():
         self.move_scores = my_move_scores
 
     def potential_moves(self):
-        if self.kinged == True:
-            return [(self.x + 1, self.y + 1), (self.x + 1, self.y - 1), (self.x - 1, self.y + 1), (self.x - 1, self.y - 1)]
+        """ Finds a piece's potential moves"""
+
+        if self.kinged is True:
+            return [(self.x + 1, self.y + 1), (self.x + 1, self.y - 1),\
+                    (self.x - 1, self.y + 1), (self.x - 1, self.y - 1)]
         elif self.color.upper() == "R":
             return [(self.x + 1, self.y - 1), (self.x + 1, self.y + 1)]
         else:
@@ -81,7 +95,7 @@ def game_setup(board_size, score_list = []):
     if len(score_list) != 0:
         R = MoveScores(score_list)
     else:
-        R = MoveScores("Random")
+        R = MoveScores("mystery")
     my_red_list = []
     for y in range(-1, board_size, 2):
         for x in range(0, 3):
@@ -98,7 +112,7 @@ def game_setup(board_size, score_list = []):
         if piece.y < 0 or piece.y > board_size:
             my_red_list.remove(piece)
 
-    B = MoveScores("1000_gens")
+    B = MoveScores("zeros")
     my_black_list = []
     for y in range(0, board_size, 2):
         for x in range(1, 4):
@@ -356,9 +370,10 @@ def calc_distance_score(nearest_opponents, piece, potential_piece, my_list, oppo
             total_distance_score = ((-distance_change) * piece.move_scores.coward_factor) * (1 / (len(my_list) / len(opponent_list)))
             if total_distance_score > best_distance_score[1]:
                 best_distance_score = ("Running away!", total_distance_score)
-    for opponent_piece in opponent_list:
-        if distance_to_opponent(potential_piece, opponent_piece) <= nearest_opponent_distance:
-            best_distance_score = ("None", 0)
+    if len(my_list) / len(opponent_list) <= piece.move_scores.aggression_threshhold:
+        for opponent_piece in opponent_list:
+            if distance_to_opponent(potential_piece, opponent_piece) <= nearest_opponent_distance:
+                best_distance_score = ("None", 0)
 
     return best_distance_score
 
@@ -539,7 +554,7 @@ def computers_only(red_list, black_list, board, board_size):
 def print_scores(piece):
     for attr, value in piece.move_scores.__dict__.items():
         if attr in ("jump_score", "death_score", "avoid_death_score", "provide_defense_score", "distance_to_king_score"):
-            value = value / 10
+            value = value
         print(value, "\t", end = "")
 
     return

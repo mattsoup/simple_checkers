@@ -85,7 +85,7 @@ def run_script(run_list = []):
 
 
 if __name__ == "__main__":
-    out = open("500gens_random_v_1000gens.txt", "a+")
+    out = open("500gens_random_v_zeros.txt", "a+")
     out.seek(0)
     if len(out.readlines()) > 0:
         out.seek(0)
